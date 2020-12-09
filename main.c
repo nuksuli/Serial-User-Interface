@@ -117,6 +117,7 @@ int main(void)
     
     while (1)
     {
+        USART0_sendString("Program starting! \r\n");
         c = USART0_readChar();
         if(c != '\n' && c != '\r')
         {
@@ -135,15 +136,3 @@ int main(void)
         }
     }
 }
-© 2020 GitHub, Inc.
-Terms
-Privacy
-Security
-Status
-Help
-Contact GitHub
-Pricing
-API
-Training
-Blog
-About
