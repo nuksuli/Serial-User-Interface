@@ -7,18 +7,10 @@
 
 
 #include <avr/io.h>
-#include <avr/wdt.h>
 #include <avr/interrupt.h>
 
 
 void reset(void)
 {
-    wdt_enable(WDTO_2S);
-    wdt_reset();
-}
-
-ISR(WDT_vect) {
-  // DNothing on here, but this is
-  // a block of code otherwise the interrupt calls an
-  // uninitialized interrupt handler.
+    _PROTECTED_WRITE(RSTCTRL.SWRR,RSTCTRL_SWRE_bm);
 }
