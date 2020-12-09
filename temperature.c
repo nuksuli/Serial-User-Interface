@@ -9,7 +9,7 @@
 #include <avr/io.h>
 #include "temperature.h"
 
-int temperature(void)
+uint16_t temperature(void)
 {
     //Set reference voltage to 1.1V
     VREF.CTRLA |= VREF_ADC0REFSEL_1V1_gc;

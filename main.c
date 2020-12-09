@@ -21,6 +21,11 @@ void LED_off(void);
 void LED_init(void);
 void command_parse(char *parsed_command[], char *command);
 void command_execute(char *parsed_command[]);
+static FILE USART_stream;
+
+
+
+
 
 //Initialize serial data transfer
 void USART0_init(void)
@@ -31,6 +36,7 @@ void USART0_init(void)
     USART0.BAUD = (uint16_t)USART0_BAUD_RATE(9600);
 
     USART0.CTRLB |= USART_RXEN_bm | USART_TXEN_bm;
+    stdout = &USART_stream;
 }
 
 //Send a character to serial
@@ -42,6 +48,14 @@ void USART0_charsend(char c)
     }
     USART0.TXDATAL = c;
 }
+
+static int USART0_charprint(char c, FILE *stream)
+{ 
+    USART0_charsend(c);
+    return 0; 
+}
+static FILE USART_stream = FDEV_SETUP_STREAM(USART0_charprint, 
+        NULL, _FDEV_SETUP_WRITE);
 
 //Send a string to serial
 void USART0_send(char *str)
@@ -157,8 +171,8 @@ void command_execute(char *parsed_command[])
     }
     else if(strcmp(parsed_command[0], "TEMP") == 0)
     {
-        USART0_send("Lampotila:");
-        USART0_charsend(temperature());
+        uint16_t temp = temperature();
+        printf("Temperature: %d \n\r", temp);
     }
     else if(strcmp(parsed_command[0], "RESET") == 0)
     {
