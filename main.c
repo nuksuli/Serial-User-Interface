@@ -10,6 +10,7 @@
 #include <string.h>
 #include "temperature.h"
 #include "reset.h"
+#include "adc_conversion.h"
 //Function prototypes
 void USART0_init(void);
 void USART0_charsend(char c);
@@ -178,6 +179,19 @@ void command_execute(char *parsed_command[])
     {
         USART0_send("Resetting...\r\n");
         reset();
+    }
+    else if(strcmp(parsed_command[0], "ADC") == 0)
+    {
+        if(strstr(parsed_command[1], "AN") != NULL)
+        {
+            uint16_t adcp = adc_conversion_with_param(parsed_command[1]);
+            printf("ADC conversion at channel%d: %d\n\r", get_channel(), adcp);
+        }
+        else
+        {
+            uint16_t adc = adc_conversion();
+            printf("Adc conversion on channel%d: %d \n\r", get_channel(), adc);
+        }
     }
     else 
     {

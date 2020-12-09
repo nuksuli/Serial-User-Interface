@@ -1,6 +1,6 @@
 /*
  * File:   reset.c
- * Author: dtek0068
+ * Author: Niko Kalliomaa and Matias Lappalainen
  *
  * Created on 09 December 2020, 23:03
  */

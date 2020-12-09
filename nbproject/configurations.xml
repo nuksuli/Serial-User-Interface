@@ -6,6 +6,7 @@
                    projectFiles="true">
       <itemPath>temperature.h</itemPath>
       <itemPath>reset.h</itemPath>
+      <itemPath>adc_conversion.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -19,6 +20,7 @@
       <itemPath>main.c</itemPath>
       <itemPath>temperature.c</itemPath>
       <itemPath>reset.c</itemPath>
+      <itemPath>adc_conversion.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

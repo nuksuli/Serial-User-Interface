@@ -1,6 +1,6 @@
 /*
  * File:   temperature.c
- * Author: dtek0068
+ * Author: Niko Kalliomaa
  *
  * Created on 09 December 2020, 22:13
  */
@@ -26,13 +26,20 @@ uint16_t temperature(void)
     {
         ;
     }
-    int8_t sigrow_offset = SIGROW.TEMPSENSE1; // Read signed value from signature row 
-    uint8_t sigrow_gain = SIGROW.TEMPSENSE0; // Read unsigned value from signature row 
-    uint16_t adc_reading = ADC0.RES; // ADC conversion result with 1.1 V internal reference 
+    // Read signed value from signature row 
+    int8_t sigrow_offset = SIGROW.TEMPSENSE1; 
+    // Read unsigned value from signature row 
+    uint8_t sigrow_gain = SIGROW.TEMPSENSE0; 
+    // ADC conversion result with 1.1 V internal reference 
+    uint16_t adc_reading = ADC0.RES;
+    // Result might overflow 16 bit variable (10bit+8bit)
     uint32_t temp = adc_reading - sigrow_offset; 
-    temp *= sigrow_gain; // Result might overflow 16 bit variable (10bit+8bit) 
-    temp += 0x80; // Add 1/2 to get correct rounding on division below 
-    temp >>= 8; // Divide result to get Kelvin
+    temp *= sigrow_gain; 
+    // Add 1/2 to get correct rounding on division below 
+    temp += 0x80; 
+    // Divide result to get Kelvin
+    temp >>= 8; 
+    // Get celsius by lovering the value by 273
     uint16_t temperature_in_C = temp - 273;
     
     return temperature_in_C;
