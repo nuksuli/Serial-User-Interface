@@ -2,6 +2,7 @@
 #define USART0_BAUD_RATE(BAUD_RATE) \
         ((float)(F_CPU * 64 / (16 * (float)BAUD_RATE)) + 0.5)
 #define MAX_COMMAND_LEN 255
+#define MAX_ARGUMENT_LEN 3
 #define BACKSPACE 127
 
 #include <avr/io.h>
@@ -55,6 +56,7 @@ char USART0_charread(void)
     return USART0.RXDATAL;
 }
 
+//TODO: Follow cursor.
 void USART0_read(char *command)
 {
     uint8_t index = 0;
@@ -135,7 +137,7 @@ void command_execute(char *parsed_command[])
 int main(void)
 {
     char command[MAX_COMMAND_LEN + 1];
-    char parsed_command[3][MAX_COMMAND_LEN + 1];
+    char parsed_command[MAX_ARGUMENT_LEN][MAX_COMMAND_LEN + 1];
     
     LED_init();
     USART0_init();
