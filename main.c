@@ -69,7 +69,10 @@ void USART0_read(char *command)
         else if (next_char == BACKSPACE)
         {
             USART0_charsend(next_char);
-            index--;
+            if (index > 0)
+            {
+                index--;
+            }
         }
         else if (index == MAX_COMMAND_LEN)
         {
