@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 
+//Function prototypes
 void USART0_init(void);
 void USART0_charsend(char c);
 void USART0_send(char *str);
@@ -20,6 +21,7 @@ void LED_init(void);
 void command_parse(char *parsed_command[], char *command);
 void command_execute(char *command[]);
 
+//Initialize serial data transfer
 void USART0_init(void)
 {
     PORTA.DIRCLR = PIN1_bm;
@@ -30,6 +32,7 @@ void USART0_init(void)
     USART0.CTRLB |= USART_RXEN_bm | USART_TXEN_bm;
 }
 
+//Send a character to serial
 void USART0_charsend(char c)
 {
     while (!(USART0.STATUS & USART_DREIF_bm))
@@ -39,6 +42,7 @@ void USART0_charsend(char c)
     USART0.TXDATAL = c;
 }
 
+//Send a string to serial
 void USART0_send(char *str)
 {
     for(size_t i = 0; i < strlen(str); i++)
@@ -47,6 +51,7 @@ void USART0_send(char *str)
     }
 }
 
+//Read a character from serial
 char USART0_charread(void)
 {
     while (!(USART0.STATUS & USART_RXCIF_bm))
@@ -56,6 +61,7 @@ char USART0_charread(void)
     return USART0.RXDATAL;
 }
 
+//Read input string from serial. Terminated by ENTER.
 //TODO: Follow cursor.
 void USART0_read(char *command)
 {
@@ -87,21 +93,26 @@ void USART0_read(char *command)
     command[MAX_COMMAND_LEN + 1] = '\0';
 }
 
+//Turn on LED (PF5)
 void LED_on(void)
 {
-    PORTB.OUTCLR = PIN5_bm;
+    PORTF.OUTCLR = PIN5_bm;
 }
 
+//Turn off LED (PF6)
 void LED_off(void)
 {
-    PORTB.OUTSET = PIN5_bm;
+    PORTF.OUTSET = PIN5_bm;
 }
 
-void LED_init(void)
+//Set  LED (PF5) as output and button (PF6) as input
+void PERIPHERALS_init(void)
 {
-    PORTB.DIRSET = PIN5_bm;
+    PORTF.DIRSET = PIN5_bm;
+    PORTF.DIRCLR = PIN6_bm;
 }
 
+//Parse arguments separated by spaces from input string
 void command_parse(char *parsed_command[], char *command)
 {
     char *token;
@@ -115,6 +126,7 @@ void command_parse(char *parsed_command[], char *command)
     }
 }
 
+//Execute command defined by parsed arguments.
 void command_execute(char *parsed_command[])
 {
     if(strcmp(parsed_command[0], "LED") == 0)
