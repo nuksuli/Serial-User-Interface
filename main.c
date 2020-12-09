@@ -15,11 +15,11 @@ void USART0_charsend(char c);
 void USART0_send(char *str);
 char USART0_charread(void);
 void USART0_read(char *command);
-void LED_on(void);
+void LED_on(void); 
 void LED_off(void);
 void LED_init(void);
 void command_parse(char *parsed_command[], char *command);
-void command_execute(char *command[]);
+void command_execute(char *parsed_command[]);
 
 //Initialize serial data transfer
 void USART0_init(void)
@@ -100,7 +100,7 @@ void LED_on(void)
     PORTF.OUTCLR = PIN5_bm;
 }
 
-//Turn off LED (PF6)
+//Turn off LED (PF5)
 void LED_off(void)
 {
     PORTF.OUTSET = PIN5_bm;
@@ -110,6 +110,7 @@ void LED_off(void)
 void PERIPHERAL_init(void)
 {
     PORTF.DIRSET = PIN5_bm;
+    PORTF.OUTSET = PIN5_bm;
     PORTF.DIRCLR = PIN6_bm;
 }
 
@@ -132,13 +133,26 @@ void command_execute(char *parsed_command[])
 {
     if(strcmp(parsed_command[0], "LED") == 0)
     {
-        if (PORTF.OUT & PIN6_bm)
+        if (strcmp(parsed_command[1], "ON") == 0)
         {
-            USART0_send("LED status: ON\r\n");
+            LED_on();
+            parsed_command[1] = "\0";
         }
-        else 
+        else if (strcmp(parsed_command[1], "OFF") == 0)
         {
-            USART0_send("LED status: OFF\r\n");
+            LED_off();
+            parsed_command[1] = "\0";
+        }
+        else
+        {
+            if (PORTF.OUT & PIN5_bm)
+            {
+                USART0_send("LED status: OFF\r\n");
+            }
+            else 
+            {
+                USART0_send("LED status: ON\r\n");
+            }
         }
     }
     else 
