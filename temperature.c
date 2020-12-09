@@ -11,14 +11,21 @@
 
 int temperature(void)
 {
+    //Set reference voltage to 1.1V
     VREF.CTRLA |= VREF_ADC0REFSEL_1V1_gc;
+    //Set temperature sensor channel
     ADC0.MUXPOS |= ADC_MUXPOS_TEMPSENSE_gc;
+    
     ADC0.CTRLD |= ADC_INITDLY_DLY64_gc;
     ADC0.SAMPCTRL = 64;
     ADC0.CTRLC |= ADC_SAMPCAP_bm;
     ADC0.CTRLA |= ADC_ENABLE_bm;
     ADC0.COMMAND = ADC_STCONV_bm;
-    while ((ADC0.INTFLAGS & ADC_RESRDY_bm) == 0) ; // wait for completion
+    // wait for completion
+    while ((ADC0.INTFLAGS & ADC_RESRDY_bm) == 0)
+    {
+        ;
+    }
     int8_t sigrow_offset = SIGROW.TEMPSENSE1; // Read signed value from signature row 
     uint8_t sigrow_gain = SIGROW.TEMPSENSE0; // Read unsigned value from signature row 
     uint16_t adc_reading = ADC0.RES; // ADC conversion result with 1.1 V internal reference 

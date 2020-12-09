@@ -8,7 +8,8 @@
 #include <avr/io.h>
 #include <stdio.h>
 #include <string.h>
-
+#include "temperature.h"
+#include "reset.h"
 //Function prototypes
 void USART0_init(void);
 void USART0_charsend(char c);
@@ -93,7 +94,6 @@ void USART0_read(char *command)
     USART0_send("\r\n");
     command[MAX_COMMAND_LEN + 1] = '\0';
 }
-
 //Turn on LED (PF5)
 void LED_on(void)
 {
@@ -140,6 +140,16 @@ void command_execute(char *parsed_command[])
         {
             USART0_send("LED status: OFF\r\n");
         }
+    }
+    else if(strcmp(parsed_command[0], "TEMP") == 0)
+    {
+        USART0_send("Lampotila:");
+        USART0_charsend(temperature());
+    }
+    else if(strcmp(parsed_command[0], "RESET") == 0)
+    {
+        USART0_send("Resetting...\r\n");
+        reset();
     }
     else 
     {
