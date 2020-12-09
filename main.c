@@ -1,7 +1,7 @@
 #define F_CPU 3333333
 #define USART0_BAUD_RATE(BAUD_RATE) \
         ((float)(F_CPU * 64 / (16 * (float)BAUD_RATE)) + 0.5)
-#define MAX_COMMAND_LEN 8
+#define MAX_COMMAND_LEN 255
 #define BACKSPACE 127
 
 #include <avr/io.h>
@@ -16,7 +16,8 @@ void USART0_read(char *command);
 void LED_on(void);
 void LED_off(void);
 void LED_init(void);
-void command_execute(char *command);
+void command_parse(char *parsed_command[], char *command);
+void command_execute(char *command[]);
 
 void USART0_init(void)
 {
@@ -57,7 +58,7 @@ char USART0_charread(void)
 void USART0_read(char *command)
 {
     uint8_t index = 0;
-    while (index < MAX_COMMAND_LEN + 1)
+    while (index <= MAX_COMMAND_LEN)
     {
         char next_char = USART0_charread();
         if (next_char == '\r')
@@ -74,18 +75,14 @@ void USART0_read(char *command)
                 index--;
             }
         }
-        else if (index == MAX_COMMAND_LEN)
-        {
-            USART0_send("\r\n");
-            command[index] = '\0';
-            return;
-        }
         else
         {
             USART0_charsend(next_char);
             command[index++] = next_char;
         }
     }
+    USART0_send("\r\n");
+    command[MAX_COMMAND_LEN + 1] = '\0';
 }
 
 void LED_on(void)
@@ -103,9 +100,22 @@ void LED_init(void)
     PORTB.DIRSET = PIN5_bm;
 }
 
-void command_execute(char *command)
+void command_parse(char *parsed_command[], char *command)
 {
-    if(strcmp(command, "LED") == 0)
+    char *token;
+    uint8_t i = 0;
+    
+    token = strtok(command, " ");
+    while (token != NULL)
+    {
+        parsed_command[i++] = strdup(token);
+        token = strtok(NULL, " ");
+    }
+}
+
+void command_execute(char *parsed_command[])
+{
+    if(strcmp(parsed_command[0], "LED") == 0)
     {
         if (PORTF.OUT & PIN6_bm)
         {
@@ -124,7 +134,8 @@ void command_execute(char *command)
 
 int main(void)
 {
-    char command[MAX_COMMAND_LEN];
+    char command[MAX_COMMAND_LEN + 1];
+    char parsed_command[3][MAX_COMMAND_LEN + 1];
     
     LED_init();
     USART0_init();
@@ -133,6 +144,7 @@ int main(void)
     while (1)
     {
         USART0_read(command);
-        command_execute(command);
+        command_parse(parsed_command, command);
+        command_execute(parsed_command);
     }
 }
