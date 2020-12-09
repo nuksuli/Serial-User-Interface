@@ -11,6 +11,8 @@
 #include "temperature.h"
 #include "reset.h"
 #include "adc_conversion.h"
+#include "vref.h"
+
 //Function prototypes
 void USART0_init(void);
 void USART0_charsend(char c);
@@ -191,6 +193,24 @@ void command_execute(char *parsed_command[])
         {
             uint16_t adc = adc_conversion();
             printf("Adc conversion on channel%d: %d \n\r", get_channel(), adc);
+        }
+    }
+    else if(strcmp(parsed_command[0], "VREF") == 0)
+    {   
+        if(strcmp(parsed_command[1], "SET") == 0)
+        {
+            if (set_vref(parsed_command[2]) == 1)
+            {
+                printf("Success");
+            }
+            else
+            {
+                printf("Set failed");
+            }
+        }
+        else
+        {
+            printf("Vref value %c", get_vref()); 
         }
     }
     else 
