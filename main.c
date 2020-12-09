@@ -196,7 +196,7 @@ void command_execute(char *parsed_command[])
         }
         else
         {
-            printf("Vref value %s", get_vref()); 
+            printf("Vref value %c", get_vref()); 
         }
     }
     else 
