@@ -69,6 +69,7 @@ void USART0_read(char *command)
     while (index <= MAX_COMMAND_LEN)
     {
         char next_char = USART0_charread();
+        //ENTER
         if (next_char == '\r')
         {
             USART0_send("\r\n");
@@ -105,8 +106,8 @@ void LED_off(void)
     PORTF.OUTSET = PIN5_bm;
 }
 
-//Set  LED (PF5) as output and button (PF6) as input
-void PERIPHERALS_init(void)
+//Set LED to output and button to input.
+void PERIPHERAL_init(void)
 {
     PORTF.DIRSET = PIN5_bm;
     PORTF.DIRCLR = PIN6_bm;
@@ -151,7 +152,7 @@ int main(void)
     char command[MAX_COMMAND_LEN + 1];
     char parsed_command[MAX_ARGUMENT_LEN][MAX_COMMAND_LEN + 1];
     
-    LED_init();
+    PERIPHERAL_init();
     USART0_init();
     USART0_send("Program starting! \r\n");
     
