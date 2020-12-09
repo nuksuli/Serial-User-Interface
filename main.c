@@ -1,6 +1,6 @@
 /*
  * File:   main.c
- * Author: dtek0068
+ * Author: Niko Kalliomaa, Jerri Pinomäki, Werneri Aarnio and Matias Lappalainen
  *
  * Created on 09 December 2020, 16:02
  */
