@@ -1,53 +1,36 @@
-/*
-    \file   main.c
-    \brief  Main file of the project.
-    (c) 2018 Microchip Technology Inc. and its subsidiaries.
-    Subject to your compliance with these terms, you may use Microchip software and any
-    derivatives exclusively with Microchip products. It is your responsibility to comply with third party
-    license terms applicable to your use of third party software (including open source software) that
-    may accompany Microchip software.
-    THIS SOFTWARE IS SUPPLIED BY MICROCHIP "AS IS". NO WARRANTIES, WHETHER
-    EXPRESS, IMPLIED OR STATUTORY, APPLY TO THIS SOFTWARE, INCLUDING ANY
-    IMPLIED WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY, AND FITNESS
-    FOR A PARTICULAR PURPOSE.
-    IN NO EVENT WILL MICROCHIP BE LIABLE FOR ANY INDIRECT, SPECIAL, PUNITIVE,
-    INCIDENTAL OR CONSEQUENTIAL LOSS, DAMAGE, COST OR EXPENSE OF ANY KIND
-    WHATSOEVER RELATED TO THE SOFTWARE, HOWEVER CAUSED, EVEN IF MICROCHIP
-    HAS BEEN ADVISED OF THE POSSIBILITY OR THE DAMAGES ARE FORESEEABLE. TO
-    THE FULLEST EXTENT ALLOWED BY LAW, MICROCHIP'S TOTAL LIABILITY ON ALL
-    CLAIMS IN ANY WAY RELATED TO THIS SOFTWARE WILL NOT EXCEED THE AMOUNT
-    OF FEES, IF ANY, THAT YOU HAVE PAID DIRECTLY TO MICROCHIP FOR THIS
-    SOFTWARE.
-*/
-
 #define F_CPU 3333333
-#define USART0_BAUD_RATE(BAUD_RATE) ((float)(F_CPU * 64 / (16 * (float)BAUD_RATE)) + 0.5)
-#define MAX_COMMAND_LEN 8
+#define USART0_BAUD_RATE(BAUD_RATE) \
+        ((float)(F_CPU * 64 / (16 * (float)BAUD_RATE)) + 0.5)
+#define MAX_COMMAND_LEN 255
+#define MAX_ARGUMENT_LEN 3
+#define BACKSPACE 127
 
 #include <avr/io.h>
 #include <stdio.h>
 #include <string.h>
 
 void USART0_init(void);
-void USART0_sendChar(char c);
-void USART0_sendString(char *str);
-char USART0_readChar(void);
+void USART0_charsend(char c);
+void USART0_send(char *str);
+char USART0_charread(void);
+void USART0_read(char *command);
 void LED_on(void);
 void LED_off(void);
 void LED_init(void);
-void executeCommand(char *command);
+void command_parse(char *parsed_command[], char *command);
+void command_execute(char *command[]);
 
 void USART0_init(void)
 {
-    PORTA.DIR &= ~PIN1_bm;
-    PORTA.DIR |= PIN0_bm;
+    PORTA.DIRCLR = PIN1_bm;
+    PORTA.DIRSET = PIN0_bm;
     
     USART0.BAUD = (uint16_t)USART0_BAUD_RATE(9600);
 
     USART0.CTRLB |= USART_RXEN_bm | USART_TXEN_bm;
 }
 
-void USART0_sendChar(char c)
+void USART0_charsend(char c)
 {
     while (!(USART0.STATUS & USART_DREIF_bm))
     {
@@ -56,15 +39,15 @@ void USART0_sendChar(char c)
     USART0.TXDATAL = c;
 }
 
-void USART0_sendString(char *str)
+void USART0_send(char *str)
 {
     for(size_t i = 0; i < strlen(str); i++)
     {
-        USART0_sendChar(str[i]);
+        USART0_charsend(str[i]);
     }
 }
 
-char USART0_readChar(void)
+char USART0_charread(void)
 {
     while (!(USART0.STATUS & USART_RXCIF_bm))
     {
@@ -73,66 +56,97 @@ char USART0_readChar(void)
     return USART0.RXDATAL;
 }
 
+//TODO: Follow cursor.
+void USART0_read(char *command)
+{
+    uint8_t index = 0;
+    while (index <= MAX_COMMAND_LEN)
+    {
+        char next_char = USART0_charread();
+        if (next_char == '\r')
+        {
+            USART0_send("\r\n");
+            command[index] = '\0';
+            return;
+        }
+        else if (next_char == BACKSPACE)
+        {
+            USART0_charsend(next_char);
+            if (index > 0)
+            {
+                index--;
+            }
+        }
+        else
+        {
+            USART0_charsend(next_char);
+            command[index++] = next_char;
+        }
+    }
+    USART0_send("\r\n");
+    command[MAX_COMMAND_LEN + 1] = '\0';
+}
+
 void LED_on(void)
 {
-    PORTB.OUT &= ~PIN5_bm;
+    PORTB.OUTCLR = PIN5_bm;
 }
 
 void LED_off(void)
 {
-    PORTB.OUT |= PIN5_bm;
+    PORTB.OUTSET = PIN5_bm;
 }
 
 void LED_init(void)
 {
-    PORTB.DIR |= PIN5_bm;
+    PORTB.DIRSET = PIN5_bm;
 }
 
-void executeCommand(char *command)
+void command_parse(char *parsed_command[], char *command)
 {
-    if(strcmp(command, "ON") == 0)
+    char *token;
+    uint8_t i = 0;
+    
+    token = strtok(command, " ");
+    while (token != NULL)
     {
-        LED_on();
-        USART0_sendString("OK, LED ON.\r\n");
+        parsed_command[i++] = strdup(token);
+        token = strtok(NULL, " ");
     }
-    else if (strcmp(command, "OFF") == 0)
+}
+
+void command_execute(char *parsed_command[])
+{
+    if(strcmp(parsed_command[0], "LED") == 0)
     {
-        LED_off();
-        USART0_sendString("OK, LED OFF.\r\n");
-    } 
+        if (PORTF.OUT & PIN6_bm)
+        {
+            USART0_send("LED status: ON\r\n");
+        }
+        else 
+        {
+            USART0_send("LED status: OFF\r\n");
+        }
+    }
     else 
     {
-        USART0_sendString("Incorrect command.\r\n");
+        USART0_send("NOT A VALID COMMAND!\r\n");
     }
 }
 
 int main(void)
 {
-    char command[MAX_COMMAND_LEN];
-    uint8_t index = 0;
-    char c;
+    char command[MAX_COMMAND_LEN + 1];
+    char parsed_command[MAX_ARGUMENT_LEN][MAX_COMMAND_LEN + 1];
     
     LED_init();
     USART0_init();
+    USART0_send("Program starting! \r\n");
     
     while (1)
     {
-        USART0_sendString("Program starting! \r\n");
-        c = USART0_readChar();
-        if(c != '\n' && c != '\r')
-        {
-            command[index++] = c;
-            if(index > MAX_COMMAND_LEN)
-            {
-                index = 0;
-            }
-        }
-        
-        if(c == '\n')
-        {
-            command[index] = '\0';
-            index = 0;
-            executeCommand(command);
-        }
+        USART0_read(command);
+        command_parse(parsed_command, command);
+        command_execute(parsed_command);
     }
 }
