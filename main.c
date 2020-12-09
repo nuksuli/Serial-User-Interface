@@ -10,6 +10,8 @@
 #include <string.h>
 #include "temperature.h"
 #include "reset.h"
+#include "vref.h"
+
 //Function prototypes
 void USART0_init(void);
 void USART0_charsend(char c);
@@ -178,6 +180,24 @@ void command_execute(char *parsed_command[])
     {
         USART0_send("Resetting...\r\n");
         reset();
+    }
+    else if(strcmp(parsed_command[0], "VREF") == 0)
+    {   
+        if(strcmp(parsed_command[1], "SET") == 0)
+        {
+            if (set_vref(parsed_command[2]) == 1)
+            {
+                printf("Success");
+            }
+            else
+            {
+                printf("Set failed");
+            }
+        }
+        else
+        {
+            printf("Vref value %s", get_vref()); 
+        }
     }
     else 
     {
