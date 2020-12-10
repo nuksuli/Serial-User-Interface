@@ -4,6 +4,11 @@
 #define MAX_COMMAND_LEN 255
 #define MAX_ARGUMENT_LEN 3
 #define BACKSPACE 127
+#define VREF_0V55 0b00000000
+#define VREF_1V1 0b00010001
+#define VREF_1V5 0b01000100
+#define VREF_2V5 0b00100010
+
 
 #include <avr/io.h>
 #include <stdio.h>
@@ -132,7 +137,7 @@ void PERIPHERAL_init(void)
 }
 
 //Parse arguments separated by spaces from input string
-void command_parse(char *parsed_command[], char *command)
+void command_parse(char **parsed_command, char *command)
 {
     char *token;
     uint8_t i = 0;
@@ -153,12 +158,10 @@ void command_execute(char *parsed_command[])
         if (strcmp(parsed_command[1], "ON") == 0)
         {
             LED_on();
-            parsed_command[1] = "\0";
         }
         else if (strcmp(parsed_command[1], "OFF") == 0)
         {
             LED_off();
-            parsed_command[1] = "\0";
         }
         else
         {
@@ -201,21 +204,48 @@ void command_execute(char *parsed_command[])
         {
             if (set_vref(parsed_command[2]) == 1)
             {
-                printf("Success");
+                printf("Success\n\r");
             }
             else
             {
-                printf("Set failed");
+                printf("Set failed\n\r");
             }
+        }
+        else if (parsed_command[1] != "\0")
+        {
+            printf("INVALID ARGUMENT\n\r");
         }
         else
         {
-            printf("Vref value %c", get_vref()); 
+            if (get_vref() == VREF_1V1)
+            {
+                printf("VREF VALUE IS 1.1V\n\r");
+            }
+            else if (get_vref() == VREF_0V55)
+            {
+                printf("VREF VALUE IS 0.55V\n\r");
+            }
+            else if (get_vref() == VREF_1V5)
+            {
+                printf("VREF VALUE IS 1.5V\n\r");
+            }
+            else if (get_vref() == VREF_2V5)
+            {
+                printf("VREF VALUE IS 2.5V\n\r");
+            }
+            else
+            {
+                printf("%d\n\r", get_vref());
+            }
         }
     }
     else 
     {
         USART0_send("NOT A VALID COMMAND!\r\n");
+    }
+    for (int i = 0; i < MAX_ARGUMENT_LEN; i++)
+    {
+        parsed_command[i] = "\0";
     }
 }
 
