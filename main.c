@@ -187,12 +187,12 @@ void command_execute(char *parsed_command[])
         if(strstr(parsed_command[1], "AN") != NULL)
         {
             uint16_t adcp = adc_conversion_with_param(parsed_command[1]);
-            printf("ADC conversion at channel%d: %d\n\r", get_channel(), adcp);
+            printf("ADC conversion on channel%d: %d\n\r", get_channel(), adcp);
         }
         else
         {
             uint16_t adc = adc_conversion();
-            printf("Adc conversion on channel%d: %d \n\r", get_channel(), adc);
+            printf("Adc conversion: %d \n\r", adc);
         }
     }
     else if(strcmp(parsed_command[0], "VREF") == 0)

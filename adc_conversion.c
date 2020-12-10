@@ -17,7 +17,7 @@
 
 void ADC0_init();
 uint16_t ADC0_read(void);
-uint8_t channel;
+volatile uint8_t channel;
 uint16_t adc_conversion_with_param(char input[]);
 
 void ADC0_init()
@@ -77,10 +77,6 @@ void ADC0_init()
     {
        ADC0.MUXPOS  = ADC_MUXPOS_AIN9_gc;
     }
-    else
-    {
-        ADC0.MUXPOS  = ADC_MUXPOS_AIN6_gc;
-    }
 }
 uint16_t ADC0_read(void)
 {
@@ -100,19 +96,16 @@ uint16_t ADC0_read(void)
 }
 
 uint16_t adc_conversion(void) {
-    channel = 6;
-    
     ADC0_init();
-    
+    channel = -1;
     return ADC0_read();
 }
  
 uint16_t adc_conversion_with_param(char input[])
 {
     channel = (int)input[2] - 48;
-    
     ADC0_init();
-    
+    channel = -1;
     return ADC0_read();
 }
 

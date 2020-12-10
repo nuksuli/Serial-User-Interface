@@ -26,6 +26,7 @@ uint16_t temperature(void)
     {
         ;
     }
+    ADC0.INTFLAGS = ADC_RESRDY_bm;
     // Read signed value from signature row 
     int8_t sigrow_offset = SIGROW.TEMPSENSE1; 
     // Read unsigned value from signature row 

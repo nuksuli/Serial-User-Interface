@@ -1,6 +1,6 @@
 #ifndef RESET_H_ 
 #define RESET_H_
 
-void reset(void);  /* An example function declaration */
+void reset(void);
 
-#endif // FOO_H_
+#endif
