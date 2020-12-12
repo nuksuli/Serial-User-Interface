@@ -189,8 +189,17 @@ void command_execute(char *parsed_command[])
     {
         if(strcmp(parsed_command[1], "SET") == 0)
         {
-            printf(parsed_command[2] + 2);
-            
+            if(strstr(parsed_command[2], "AN") != NULL)
+            {
+                if(ADC0_set_channel(parsed_command[2 + 2]) == 1)
+                {
+                    printf("Channel set to: %i \r\n", parsed_command[2] + 2);
+                }
+                else
+                {
+                    printf("Invalid channel\r\n");
+                }
+            }
         }
         else
         {

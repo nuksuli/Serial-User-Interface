@@ -6,8 +6,6 @@
  */
 
 
-#include <xc.h>
-
 /* RTC Period */
 #define RTC_PERIOD            (511)
 
@@ -77,6 +75,10 @@ void ADC0_init()
     {
        ADC0.MUXPOS  = ADC_MUXPOS_AIN9_gc;
     }
+    else
+    {
+        ADC0.MUXPOS = ADC_MUXPOS_AIN6_gc;
+    }
 }
 uint16_t ADC0_read(void)
 {
@@ -106,8 +108,14 @@ uint16_t ADC0_get_channel(void)
     return channel;
 }
 
-void ADC0_set_channel(uint16_t ch)
+uint16_t ADC0_set_channel(uint16_t ch)
 {
-    channel = ch;
-    return;
+    if ((ch <= 0) && (ch <= 16))
+    {
+        channel = ch;
+        return 1;
+    }    
+    else {
+        return 0;
+    }
 }
