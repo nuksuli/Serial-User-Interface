@@ -11,6 +11,7 @@
 
 
 #include <avr/io.h>
+#include <avr/interrupt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,20 +25,24 @@
 void USART0_init(void);
 void USART0_charsend(char c);
 void USART0_send(char *str);
-char USART0_charread(void);
-void USART0_read(char *command);
 void LED_on(void); 
 void LED_off(void);
-void PERIPHERAL_init(void);
-void command_parse(char *parsed_command[], char *command);
-void command_execute(char *parsed_command[]);
+void LED_init(void);
+void command_parse(volatile char **parsed_command, volatile char *command);
+void command_execute(volatile char **parsed_command);
 static FILE USART_stream;
 
-//Initialize serial data transfer
+volatile char *command;
+volatile char **parsed_command;
+volatile uint8_t index = 0;
+
+//Initialise serial data transfer
 void USART0_init(void)
 {
     PORTA.DIRCLR = PIN1_bm;
     PORTA.DIRSET = PIN0_bm;
+    
+    USART0.CTRLA |= USART_RXCIE_bm;
     
     USART0.BAUD = (uint16_t)USART0_BAUD_RATE(9600);
 
@@ -72,7 +77,7 @@ void USART0_send(char *str)
     }
 }
 
-//Read a character from serial
+/*
 char USART0_charread(void)
 {
     while (!(USART0.STATUS & USART_RXCIF_bm))
@@ -81,9 +86,9 @@ char USART0_charread(void)
     }
     return USART0.RXDATAL;
 }
+ */
 
-//Read input string from serial. Terminated by ENTER.
-//TODO: Follow cursor.
+/*
 void USART0_read(char *command)
 {
     uint8_t index = 0;
@@ -114,7 +119,8 @@ void USART0_read(char *command)
     USART0_send("\r\n");
     command[MAX_COMMAND_LEN + 1] = '\0';
 }
-//Set LED to output and button to input.
+ */
+
 void PERIPHERAL_init(void)
 {
     PORTF.DIRSET = PIN5_bm;
@@ -123,7 +129,7 @@ void PERIPHERAL_init(void)
 }
 
 //Parse arguments separated by spaces from input string
-void command_parse(char **parsed_command, char *command)
+void command_parse(volatile char **parsed_command, volatile char *command)
 {
     char *token;
     uint8_t i = 0;
@@ -137,7 +143,7 @@ void command_parse(char **parsed_command, char *command)
 }
 
 //Execute command defined by parsed arguments.
-void command_execute(char *parsed_command[])
+void command_execute(volatile char **parsed_command)
 {
     if(strcmp(parsed_command[0], "LED") == 0)
     {
@@ -203,7 +209,7 @@ void command_execute(char *parsed_command[])
                 printf("Set failed\n\r");
             }
         }
-        else if (parsed_command[1] != "\0")
+        else if (strcmp(parsed_command[1], "\0") == 0)
         {
             printf("INVALID ARGUMENT\n\r");
         }
@@ -242,27 +248,70 @@ void command_execute(char *parsed_command[])
     }
     else 
     {
-        USART0_send("NOT A VALID COMMAND!\r\n");
+        printf("NOT A VALID COMMAND\n\r");
     }
+    /*
     for (int i = 0; i < MAX_ARGUMENT_LEN; i++)
     {
         parsed_command[i] = "\0";
     }
+     */
 }
 
 int main(void)
-{
-    char command[MAX_COMMAND_LEN + 1];
-    char parsed_command[MAX_ARGUMENT_LEN][MAX_COMMAND_LEN + 1];
-    
+{   
     PERIPHERAL_init();
     USART0_init();
+    sei();
+    
     USART0_send("Program starting! \r\n");
     
     while (1)
     {
-        USART0_read(command);
+        ;
+    }
+}
+
+ISR(USART0_RXC_vect)
+{   
+    char next_char = USART0.RXDATAL;
+    USART0.STATUS &= ~USART_RXCIF_bm;
+    
+    if (index == UINT8_MAX)
+    {
+        USART0_send(" ");
+        command[index++] = '\0';
         command_parse(parsed_command, command);
         command_execute(parsed_command);
+        for (uint8_t i = 0; i < index; i++)
+        {
+            command[i] = '\0';
+        }
+        index = 0;
+    }
+    else if (next_char == '\r')
+    {
+        printf("\n\r");
+        command[index++] = '\0';
+        command_parse(parsed_command, command);
+        command_execute(parsed_command);
+        for (uint8_t i = 0; i < index; i++)
+        {
+            command[i] = '\0';
+        }
+        index = 0;
+    }
+    else if (next_char == BACKSPACE)
+    {
+        printf("%c", next_char);
+        if (index > 0)
+        {
+            index--;
+        }
+    }
+    else
+    {
+        printf("%c", next_char);
+        command[index++] = next_char;
     }
 }
