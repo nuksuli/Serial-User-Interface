@@ -31,10 +31,6 @@ void command_parse(char *parsed_command[], char *command);
 void command_execute(char *parsed_command[]);
 static FILE USART_stream;
 
-
-
-
-
 //Initialize serial data transfer
 void USART0_init(void)
 {
@@ -238,6 +234,15 @@ void command_execute(char *parsed_command[])
                 printf("%d\n\r", get_vref());
             }
         }
+    } else if (strcmp(parsed_command[0], "HELP") == 0) {
+        if(strcmp(parsed_command[1], "LED") == 0) {
+            USART0_send("Available LED commands:\n\tLED\t\t\t\t print LED driver status\n\tLED [ON|OFF]\t TURN LED on or off\n\tLED SET <n>\t\t set led brightness(0 <= n <= 255)");
+        } else if(strcmp(parsed_command[1], "BTN") == 0) {     
+            USART0_send("Available BTN commands:\n\tBTN\t\t\t\t print button status\n\tINV [ON|OFF]\t configure state invert\n\tPUP [ON|OFF]\t configure pull-up resistor");
+        } else {
+            USART0_send("Available commands:\n\tLED \tLED Settings (HELP LED for Details)\n\tBTN \tButton Settings (HELP BTN for Details)\n\tANSI\tDisplay settings\n\tHELP\tThis Help\n\tRESET\tReset the microcontroller");
+        }
+  
     }
     else 
     {
