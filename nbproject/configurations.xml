@@ -6,7 +6,11 @@
                    projectFiles="true">
       <itemPath>temperature.h</itemPath>
       <itemPath>reset.h</itemPath>
+<<<<<<< HEAD
       <itemPath>adc_conversion.h</itemPath>
+=======
+      <itemPath>vref.h</itemPath>
+>>>>>>> Temp commit
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -15,12 +19,18 @@
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
+<<<<<<< HEAD
       <logicalFolder name="f1" displayName="New Folder 1" projectFiles="true">
       </logicalFolder>
       <itemPath>main.c</itemPath>
       <itemPath>temperature.c</itemPath>
       <itemPath>reset.c</itemPath>
       <itemPath>adc_conversion.c</itemPath>
+=======
+      <itemPath>main.c</itemPath>
+      <itemPath>temperature.c</itemPath>
+      <itemPath>reset.c</itemPath>
+>>>>>>> Temp commit
       <itemPath>vref.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
@@ -651,6 +661,11 @@
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.ranges" value="0-5fff"/>
         <property key="poweroptions.powerenable" value="false"/>
+<<<<<<< HEAD
+=======
+        <property key="programmerToGoFilePath"
+                  value="/home/dtek0068/Serial-User-Interface/debug/default/default_ptg"/>
+>>>>>>> Temp commit
         <property key="programoptions.eraseb4program" value="true"/>
         <property key="programoptions.preservedataflash" value="false"/>
         <property key="programoptions.preservedataflash.ranges"
