@@ -12,11 +12,13 @@
 
 #include <avr/io.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "temperature.h"
 #include "reset.h"
 #include "adc_conversion.h"
 #include "vref.h"
+#include "led.h"
 
 //Function prototypes
 void USART0_init(void);
@@ -26,7 +28,7 @@ char USART0_charread(void);
 void USART0_read(char *command);
 void LED_on(void); 
 void LED_off(void);
-void LED_init(void);
+void PERIPHERAL_init(void);
 void command_parse(char *parsed_command[], char *command);
 void command_execute(char *parsed_command[]);
 static FILE USART_stream;
@@ -112,18 +114,6 @@ void USART0_read(char *command)
     USART0_send("\r\n");
     command[MAX_COMMAND_LEN + 1] = '\0';
 }
-//Turn on LED (PF5)
-void LED_on(void)
-{
-    PORTF.OUTCLR = PIN5_bm;
-}
-
-//Turn off LED (PF5)
-void LED_off(void)
-{
-    PORTF.OUTSET = PIN5_bm;
-}
-
 //Set LED to output and button to input.
 void PERIPHERAL_init(void)
 {
@@ -159,16 +149,13 @@ void command_execute(char *parsed_command[])
         {
             LED_off();
         }
+        else if (strcmp(parsed_command[1], "SET") == 0)
+        {
+            pwm_period(atoi(parsed_command[2]));
+        }
         else
         {
-            if (PORTF.OUT & PIN5_bm)
-            {
-                USART0_send("LED status: OFF\r\n");
-            }
-            else 
-            {
-                USART0_send("LED status: ON\r\n");
-            }
+            LED_status();
         }
     }
     else if(strcmp(parsed_command[0], "TEMP") == 0)
