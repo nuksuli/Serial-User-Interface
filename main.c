@@ -25,13 +25,13 @@
 void USART0_init(void);
 void USART0_charsend(char c);
 void USART0_send(char *str);
-void command_parse(volatile char **parsed_command, volatile char *command);
-void command_execute(volatile char **parsed_command);
+void command_parse(char **parsed_command, char *command);
+void command_execute(char **parsed_command);
 static FILE USART_stream;
 
-volatile char *command;
-volatile char **parsed_command;
-volatile uint8_t index = 0;
+char *command;
+char **parsed_command;
+uint8_t command_pointer = 0;
 
 //Initialise serial data transfer
 void USART0_init(void)
@@ -83,7 +83,7 @@ void PERIPHERAL_init(void)
 }
 
 //Parse arguments separated by spaces from input string
-void command_parse(volatile char **parsed_command, volatile char *command)
+void command_parse(char **parsed_command, char *command)
 {
     char *token;
     uint8_t i = 0;
@@ -97,7 +97,7 @@ void command_parse(volatile char **parsed_command, volatile char *command)
 }
 
 //Execute command defined by parsed arguments.
-void command_execute(volatile char **parsed_command)
+void command_execute(char **parsed_command)
 {
     if(strcmp(parsed_command[0], "LED") == 0)
     {
@@ -109,13 +109,22 @@ void command_execute(volatile char **parsed_command)
         {
             LED_off();
         }
+        /*
         else if (strcmp(parsed_command[1], "SET") == 0)
         {
             pwm_period(atoi(parsed_command[2]));
         }
+         */
         else
         {
-            LED_status();
+            if (LED_status())
+            {
+                printf("LED is currently OFF\n\r");
+            }
+            else
+            {
+                printf("LED is currently ON\n\r");
+            }
         }
     }
     else if(strcmp(parsed_command[0], "TEMP") == 0)
@@ -243,33 +252,33 @@ ISR(USART0_RXC_vect)
 {   
     char next_char = USART0.RXDATAL;
     
-    if (index == UINT8_MAX)
+    if (command_pointer == UINT8_MAX)
     {
         printf("\r\n");
-        command[index++] = '\0';
+        command[command_pointer++] = '\0';
         command_parse(parsed_command, command);
         command_execute(parsed_command);
-        index = 0;
+        command_pointer = 0;
     }
     else if (next_char == '\r')
     {
         printf("\n\r");
-        command[index++] = '\0';
+        command[command_pointer++] = '\0';
         command_parse(parsed_command, command);
         command_execute(parsed_command);
-        index = 0;
+        command_pointer = 0;
     }
     else if (next_char == BACKSPACE)
     {
         printf("%c", next_char);
-        if (index > 0)
+        if (command_pointer > 0)
         {
-            index--;
+            command_pointer--;
         }
     }
     else
     {
         printf("%c", next_char);
-        command[index++] = next_char;
+        command[command_pointer++] = next_char;
     }
 }

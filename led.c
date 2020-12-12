@@ -9,7 +9,6 @@
 #define F_CPU   3333333
 
 #include <avr/io.h>
-#include <util/delay.h>
 
 
 //Turn on LED (PF5)
@@ -24,18 +23,12 @@ void LED_off(void)
     PORTF.OUTSET = PIN5_bm;
 }
 
-void LED_status(void)
+uint8_t LED_status(void)
 {
-    if (PORTF.OUT & PIN5_bm)
-        {
-            printf("LED status: OFF\r\n");
-        }
-        else 
-        {
-            printf("LED status: ON\r\n");
-        }
+    return (PORTF.OUT & PIN5_bm);
 }
 
+/*
 //Set led on with duty
 void pwm_period(int duty)
 {        
@@ -59,4 +52,4 @@ void pwm_period(int duty)
         PORTF.OUTCLR = PIN5_bm;
     }
 }
-
+ */
