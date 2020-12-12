@@ -23,12 +23,11 @@
 
 //Function prototypes
 void USART0_init(void);
-void USART0_charsend(char c);
-void USART0_send(char *str);
 void command_parse(char **parsed_command, char *command);
 void command_execute(char **parsed_command);
 static FILE USART_stream;
 
+//Declaration of global variables
 char *command;
 char **parsed_command;
 uint8_t command_pointer = 0;
@@ -48,32 +47,17 @@ void USART0_init(void)
     stdout = &USART_stream;
 }
 
-//Send a character to serial
-void USART0_charsend(char c)
-{
+static int USART0_charprint(char c, FILE *stream)
+{ 
     while (!(USART0.STATUS & USART_DREIF_bm))
     {
         ;    
     }
     USART0.TXDATAL = c;
-}
-
-static int USART0_charprint(char c, FILE *stream)
-{ 
-    USART0_charsend(c);
     return 0; 
 }
 static FILE USART_stream = FDEV_SETUP_STREAM(USART0_charprint, 
         NULL, _FDEV_SETUP_WRITE);
-
-//Send a string to serial
-void USART0_send(char *str)
-{
-    for(size_t i = 0; i < strlen(str); i++)
-    {
-        USART0_charsend(str[i]);
-    }
-}
 
 void PERIPHERAL_init(void)
 {
@@ -134,7 +118,7 @@ void command_execute(char **parsed_command)
     }
     else if(strcmp(parsed_command[0], "RESET") == 0)
     {
-        USART0_send("Resetting...\r\n");
+        printf("Resetting...\r\n");
         reset();
     }
     else if(strcmp(parsed_command[0], "ADC") == 0)
@@ -240,7 +224,7 @@ int main(void)
     parsed_command = malloc(5 * sizeof(char*));
     sei();
     
-    USART0_send("Program starting!\r\n");
+    printf("Program starting!\r\n");
     
     while (1)
     {
