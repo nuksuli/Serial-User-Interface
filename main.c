@@ -187,15 +187,15 @@ void command_execute(char *parsed_command[])
     }
     else if(strcmp(parsed_command[0], "ADC") == 0)
     {
-        if(strstr(parsed_command[1], "AN") != NULL)
+        if(strcmp(parsed_command[1], "SET") == 0)
         {
-            uint16_t adcp = adc_conversion_with_param(parsed_command[1]);
-            printf("ADC conversion on channel%d: %d\n\r", get_channel(), adcp);
+            printf(parsed_command[2] + 2);
+            
         }
         else
         {
-            uint16_t adc = adc_conversion();
-            printf("Adc conversion: %d \n\r", adc);
+            uint16_t adc = ADC0_conversion();
+            printf("Conversion result: %d \n\r", adc);
         }
     }
     else if(strcmp(parsed_command[0], "VREF") == 0)

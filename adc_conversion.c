@@ -17,7 +17,7 @@
 
 void ADC0_init();
 uint16_t ADC0_read(void);
-volatile uint8_t channel;
+volatile uint8_t channel = 0;
 uint16_t adc_conversion_with_param(char input[]);
 
 void ADC0_init()
@@ -95,21 +95,19 @@ uint16_t ADC0_read(void)
     return ADC0.RES;
 }
 
-uint16_t adc_conversion(void) {
+uint16_t ADC0_conversion(void) {
     ADC0_init();
-    channel = -1;
-    return ADC0_read();
-}
- 
-uint16_t adc_conversion_with_param(char input[])
-{
-    channel = (int)input[2] - 48;
-    ADC0_init();
-    channel = -1;
     return ADC0_read();
 }
 
-uint16_t get_channel(void)
+
+uint16_t ADC0_get_channel(void)
 {
     return channel;
+}
+
+void ADC0_set_channel(uint16_t ch)
+{
+    channel = ch;
+    return;
 }
