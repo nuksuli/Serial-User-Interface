@@ -20,6 +20,7 @@
 #include "adc_conversion.h"
 #include "vref.h"
 #include "led.h"
+#include "button.h"
 
 //Function prototypes
 void USART0_init(void);
@@ -110,6 +111,43 @@ void command_execute(char **parsed_command)
             {
                 printf("LED is currently ON\n\r");
             }
+        }
+    }
+    else if (strcmp(parsed_command[0], "BTN") == 0)
+    {
+        if (strcmp(parsed_command[1], "INV") == 0)
+        {
+            if (strcmp(parsed_command[2], "ON") == 0)
+            {
+                BTN_set_invert();
+            }
+            else if (strcmp(parsed_command[2], "OFF") == 0)
+            {
+                BTN_clear_invert();
+            }
+            else
+            {
+                printf("INVALID COMMAND\n\r");
+            }
+        }
+        else if (strcmp(parsed_command[1], "PUP") == 0)
+        {
+            if (strcmp(parsed_command[2], "ON") == 0)
+            {
+                BTN_enable_pullup();
+            }
+            else if (strcmp(parsed_command[2], "OFF") == 0)
+            {
+                BTN_disable_pullup();
+            }
+            else
+            {
+                printf("INVALID COMMAND\n\r");
+            }
+        }
+        else
+        {
+            printf("%s\n\r", BTN_status());
         }
     }
     else if(strcmp(parsed_command[0], "TEMP") == 0)
