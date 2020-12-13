@@ -15,7 +15,6 @@
 
 void ADC0_init();
 uint16_t ADC0_read(void);
-volatile uint8_t channel = 0;
 
 void ADC0_init()
 {
@@ -34,6 +33,35 @@ void ADC0_init()
     
     /* Select ADC channel */
     
+    
+}
+uint16_t ADC0_read(void)
+{
+    /* Start ADC conversion */
+    ADC0.COMMAND = ADC_STCONV_bm;
+    
+    /* Wait until ADC conversion done */
+    while ( !(ADC0.INTFLAGS & ADC_RESRDY_bm) )
+    {
+        ;
+    }
+    
+    /* Clear the interrupt flag by writing 1: */
+    ADC0.INTFLAGS = ADC_RESRDY_bm;
+    
+    return ADC0.RES;
+}
+
+uint16_t ADC0_conversion(void) {
+    ADC0_init();
+    return ADC0_read();
+}
+
+
+
+
+uint8_t ADC0_set_channel(uint8_t channel)
+{
     if (channel == 0)
     {
         ADC0.MUXPOS  = ADC_MUXPOS_AIN0_gc;
@@ -74,47 +102,33 @@ void ADC0_init()
     {
         ADC0.MUXPOS  = ADC_MUXPOS_AIN9_gc;
     }
+    else if (channel == 10)
+    {
+        ADC0.MUXPOS  = ADC_MUXPOS_AIN10_gc;
+    }
+    else if (channel == 11)
+    {
+        ADC0.MUXPOS  = ADC_MUXPOS_AIN11_gc;
+    }
+    else if (channel == 12)
+    {
+        ADC0.MUXPOS  = ADC_MUXPOS_AIN12_gc;
+    }
+    else if (channel == 13)
+    {
+        ADC0.MUXPOS  = ADC_MUXPOS_AIN13_gc;
+    }
+    else if (channel == 14)
+    {
+        ADC0.MUXPOS  = ADC_MUXPOS_AIN14_gc;
+    }
+    else if (channel == 15)
+    {
+        ADC0.MUXPOS  = ADC_MUXPOS_AIN15_gc;
+    }
     else
     {
-        ADC0.MUXPOS = ADC_MUXPOS_AIN6_gc;
-    }
-}
-uint16_t ADC0_read(void)
-{
-    /* Start ADC conversion */
-    ADC0.COMMAND = ADC_STCONV_bm;
-    
-    /* Wait until ADC conversion done */
-    while ( !(ADC0.INTFLAGS & ADC_RESRDY_bm) )
-    {
-        ;
-    }
-    
-    /* Clear the interrupt flag by writing 1: */
-    ADC0.INTFLAGS = ADC_RESRDY_bm;
-    
-    return ADC0.RES;
-}
-
-uint16_t ADC0_conversion(void) {
-    ADC0_init();
-    return ADC0_read();
-}
-
-
-uint8_t ADC0_get_channel(void)
-{
-    return channel;
-}
-
-uint8_t ADC0_set_channel(uint8_t ch)
-{
-    if ((ch <= 0) && (ch <= 16))
-    {
-        channel = ch;
-        return 1;
-    }    
-    else {
         return 0;
     }
+    return 1;
 }

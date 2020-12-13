@@ -31,6 +31,7 @@ static FILE USART_stream;
 char *command;
 char **parsed_command;
 uint8_t command_pointer = 0;
+uint8_t ch;
 
 //Initialise serial data transfer
 void USART0_init(void)
@@ -127,13 +128,33 @@ void command_execute(char **parsed_command)
         {
             if(strstr(parsed_command[2], "AN") != NULL)
             {
-                if(ADC0_set_channel(parsed_command[2 + 2]) == 1)
+                ch = *(parsed_command[2] + 2) - 48;
+                if(strlen(parsed_command[2]) == 3)
+                {   
+                    if(ADC0_set_channel(ch) == 1)
+                    {
+                        printf("Channel set to: %i \r\n", ch);
+                    }
+                    else
+                    {
+                        printf("Invalid channel\r\n");
+                    }
+                }
+                else if(strlen(parsed_command[2]) == 4)
                 {
-                    printf("Channel set to: %i \r\n", parsed_command[2] + 2);
+                    ch = *(parsed_command[2] + 3) - 38;
+                    if(ADC0_set_channel(ch) == 1)
+                    {
+                        printf("Channel set to: %i \r\n", ch);
+                    }
+                    else
+                    {
+                        printf("Invalid channel\r\n");
+                    }
                 }
                 else
                 {
-                    printf("Invalid channel\r\n");
+                    printf("Invalid arguments!");
                 }
             }
         }
@@ -196,13 +217,33 @@ void command_execute(char **parsed_command)
                     "\tINV [ON|OFF]\t configure state invert\n\r"
                     "\tPUP [ON|OFF]\t configure pull-up resistor\n\r");
         }
+        else if(strcmp(parsed_command[1], "VREF") == 0)
+        {
+            printf("Available VREF commands: \n\r"
+                    "\tVREF\t\t print VREF value\n\r"
+                    "\tVREF SET <n>\t set VREF value\n\?"
+                    "\tAvailable values:\n\r"
+                    "\t0V55, 1V1, 1V5, 2V5\n\r"
+                    );
+        }
+        else if(strcmp(parsed_command[1], "ADC") == 0)
+        {
+            printf("Analog-to-digital comparator.\n\r"
+                    "Avajlable ADC commands: \n\r"
+                    "\tADC\t print Analog-to-digital conversion\n\r"
+                    "\tADC SET AN<n>\t set analog input pin\n\r"
+                    "\tAvailable pins: 0-15\n\r");
+        }
         else
         {
             printf("Available commands:\n\r"
                    "\tLED \tLED Settings (HELP LED for Details)\n\r"
                     "\tBTN \tButton Settings (HELP BTN for Details)\n\r"
                     "\tHELP\tThis Help\n\r"
-                    "\tRESET\tReset the microcontroller\n\r");
+                    "\tRESET\tReset the microcontroller\n\r"
+                    "\tVREF\tVREF Settings (HELP VREF for Details)\n\r"
+                    "\tADC\tADC Settings (HELP ADC for Details\n\r"
+                    );
         }
   
     }
