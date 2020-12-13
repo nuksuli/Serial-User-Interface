@@ -11,31 +11,35 @@
 
 
 #include <avr/io.h>
+#include <avr/interrupt.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "temperature.h"
 #include "reset.h"
 #include "adc_conversion.h"
 #include "vref.h"
+#include "led.h"
 
 //Function prototypes
 void USART0_init(void);
-void USART0_charsend(char c);
-void USART0_send(char *str);
-char USART0_charread(void);
-void USART0_read(char *command);
-void LED_on(void); 
-void LED_off(void);
-void LED_init(void);
-void command_parse(char *parsed_command[], char *command);
-void command_execute(char *parsed_command[]);
+void command_parse(char **parsed_command, char *command);
+void command_execute(char **parsed_command);
 static FILE USART_stream;
 
-//Initialize serial data transfer
+//Declaration of global variables
+char *command;
+char **parsed_command;
+uint8_t command_pointer = 0;
+
+//Initialise serial data transfer
 void USART0_init(void)
 {
     PORTA.DIRCLR = PIN1_bm;
     PORTA.DIRSET = PIN0_bm;
+    
+    USART0.CTRLA |= USART_RXCIE_bm;
+    USART0.CTRLA &= ~USART_TXCIE_bm;
     
     USART0.BAUD = (uint16_t)USART0_BAUD_RATE(9600);
 
@@ -43,88 +47,18 @@ void USART0_init(void)
     stdout = &USART_stream;
 }
 
-//Send a character to serial
-void USART0_charsend(char c)
-{
+static int USART0_charprint(char c, FILE *stream)
+{ 
     while (!(USART0.STATUS & USART_DREIF_bm))
     {
         ;    
     }
     USART0.TXDATAL = c;
-}
-
-static int USART0_charprint(char c, FILE *stream)
-{ 
-    USART0_charsend(c);
     return 0; 
 }
 static FILE USART_stream = FDEV_SETUP_STREAM(USART0_charprint, 
         NULL, _FDEV_SETUP_WRITE);
 
-//Send a string to serial
-void USART0_send(char *str)
-{
-    for(size_t i = 0; i < strlen(str); i++)
-    {
-        USART0_charsend(str[i]);
-    }
-}
-
-//Read a character from serial
-char USART0_charread(void)
-{
-    while (!(USART0.STATUS & USART_RXCIF_bm))
-    {
-        ;
-    }
-    return USART0.RXDATAL;
-}
-
-//Read input string from serial. Terminated by ENTER.
-//TODO: Follow cursor.
-void USART0_read(char *command)
-{
-    uint8_t index = 0;
-    while (index <= MAX_COMMAND_LEN)
-    {
-        char next_char = USART0_charread();
-        //ENTER
-        if (next_char == '\r')
-        {
-            USART0_send("\r\n");
-            command[index] = '\0';
-            return;
-        }
-        else if (next_char == BACKSPACE)
-        {
-            USART0_charsend(next_char);
-            if (index > 0)
-            {
-                index--;
-            }
-        }
-        else
-        {
-            USART0_charsend(next_char);
-            command[index++] = next_char;
-        }
-    }
-    USART0_send("\r\n");
-    command[MAX_COMMAND_LEN + 1] = '\0';
-}
-//Turn on LED (PF5)
-void LED_on(void)
-{
-    PORTF.OUTCLR = PIN5_bm;
-}
-
-//Turn off LED (PF5)
-void LED_off(void)
-{
-    PORTF.OUTSET = PIN5_bm;
-}
-
-//Set LED to output and button to input.
 void PERIPHERAL_init(void)
 {
     PORTF.DIRSET = PIN5_bm;
@@ -147,7 +81,7 @@ void command_parse(char **parsed_command, char *command)
 }
 
 //Execute command defined by parsed arguments.
-void command_execute(char *parsed_command[])
+void command_execute(char **parsed_command)
 {
     if(strcmp(parsed_command[0], "LED") == 0)
     {
@@ -159,15 +93,21 @@ void command_execute(char *parsed_command[])
         {
             LED_off();
         }
+        /*
+        else if (strcmp(parsed_command[1], "SET") == 0)
+        {
+            pwm_period(atoi(parsed_command[2]));
+        }
+         */
         else
         {
-            if (PORTF.OUT & PIN5_bm)
+            if (LED_status())
             {
-                USART0_send("LED status: OFF\r\n");
+                printf("LED is currently OFF\n\r");
             }
-            else 
+            else
             {
-                USART0_send("LED status: ON\r\n");
+                printf("LED is currently ON\n\r");
             }
         }
     }
@@ -178,7 +118,7 @@ void command_execute(char *parsed_command[])
     }
     else if(strcmp(parsed_command[0], "RESET") == 0)
     {
-        USART0_send("Resetting...\r\n");
+        printf("Resetting...\r\n");
         reset();
     }
     else if(strcmp(parsed_command[0], "ADC") == 0)
@@ -216,10 +156,6 @@ void command_execute(char *parsed_command[])
                 printf("Set failed\n\r");
             }
         }
-        else if (parsed_command[1] != "\0")
-        {
-            printf("INVALID ARGUMENT\n\r");
-        }
         else
         {
             if (get_vref() == VREF_1V1)
@@ -243,39 +179,90 @@ void command_execute(char *parsed_command[])
                 printf("%d\n\r", get_vref());
             }
         }
-    } else if (strcmp(parsed_command[0], "HELP") == 0) {
-        if(strcmp(parsed_command[1], "LED") == 0) {
-            USART0_send("Available LED commands:\n\tLED\t\t\t\t print LED driver status\n\tLED [ON|OFF]\t TURN LED on or off\n\tLED SET <n>\t\t set led brightness(0 <= n <= 255)");
-        } else if(strcmp(parsed_command[1], "BTN") == 0) {     
-            USART0_send("Available BTN commands:\n\tBTN\t\t\t\t print button status\n\tINV [ON|OFF]\t configure state invert\n\tPUP [ON|OFF]\t configure pull-up resistor");
-        } else {
-            USART0_send("Available commands:\n\tLED \tLED Settings (HELP LED for Details)\n\tBTN \tButton Settings (HELP BTN for Details)\n\tANSI\tDisplay settings\n\tHELP\tThis Help\n\tRESET\tReset the microcontroller");
+    }
+    else if (strcmp(parsed_command[0], "HELP") == 0)
+    {
+        if(strcmp(parsed_command[1], "LED") == 0)
+        {
+            printf("Available LED commands:\n\r"
+                   "\tLED\t\t print LED driver status\n\r"
+                   "\tLED [ON|OFF]\t turn LED on or off\n\r"
+                   "\tLED SET <n>\t set led brightness(0 <= n <= 255)\n\r");
+        }
+        else if(strcmp(parsed_command[1], "BTN") == 0)
+        {     
+            printf("Available BTN commands:\n\r"
+                    "\tBTN\t\t print button status\n\r"
+                    "\tINV [ON|OFF]\t configure state invert\n\r"
+                    "\tPUP [ON|OFF]\t configure pull-up resistor\n\r");
+        }
+        else
+        {
+            printf("Available commands:\n\r"
+                   "\tLED \tLED Settings (HELP LED for Details)\n\r"
+                    "\tBTN \tButton Settings (HELP BTN for Details)\n\r"
+                    "\tHELP\tThis Help\n\r"
+                    "\tRESET\tReset the microcontroller\n\r");
         }
   
     }
     else 
     {
-        USART0_send("NOT A VALID COMMAND!\r\n");
+        printf("NOT A VALID COMMAND!\r\n");
     }
-    for (int i = 0; i < MAX_ARGUMENT_LEN; i++)
+    for (uint8_t i = 0; i < UINT8_MAX; i++)
     {
         parsed_command[i] = "\0";
     }
 }
 
 int main(void)
-{
-    char command[MAX_COMMAND_LEN + 1];
-    char parsed_command[MAX_ARGUMENT_LEN][MAX_COMMAND_LEN + 1];
-    
+{   
     PERIPHERAL_init();
     USART0_init();
-    USART0_send("Program starting! \r\n");
+    command = malloc(UINT8_MAX * sizeof(char));
+    parsed_command = malloc(5 * sizeof(char*));
+    sei();
+    
+    printf("Program starting!\r\n");
     
     while (1)
     {
-        USART0_read(command);
+        ;
+    }
+}
+
+ISR(USART0_RXC_vect)
+{   
+    char next_char = USART0.RXDATAL;
+    
+    if (command_pointer == UINT8_MAX)
+    {
+        printf("\r\n");
+        command[command_pointer++] = '\0';
         command_parse(parsed_command, command);
         command_execute(parsed_command);
+        command_pointer = 0;
+    }
+    else if (next_char == '\r')
+    {
+        printf("\n\r");
+        command[command_pointer++] = '\0';
+        command_parse(parsed_command, command);
+        command_execute(parsed_command);
+        command_pointer = 0;
+    }
+    else if (next_char == BACKSPACE)
+    {
+        printf("%c", next_char);
+        if (command_pointer > 0)
+        {
+            command_pointer--;
+        }
+    }
+    else
+    {
+        printf("%c", next_char);
+        command[command_pointer++] = next_char;
     }
 }

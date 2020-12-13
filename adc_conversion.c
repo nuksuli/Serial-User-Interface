@@ -16,7 +16,6 @@
 void ADC0_init();
 uint16_t ADC0_read(void);
 volatile uint8_t channel = 0;
-uint16_t adc_conversion_with_param(char input[]);
 
 void ADC0_init()
 {
@@ -37,43 +36,43 @@ void ADC0_init()
     
     if (channel == 0)
     {
-       ADC0.MUXPOS  = ADC_MUXPOS_AIN0_gc;
+        ADC0.MUXPOS  = ADC_MUXPOS_AIN0_gc;
     }
     else if (channel == 1)
     {
-       ADC0.MUXPOS  = ADC_MUXPOS_AIN1_gc;
+        ADC0.MUXPOS  = ADC_MUXPOS_AIN1_gc;
     }
     else if (channel == 2)
     {
-       ADC0.MUXPOS  = ADC_MUXPOS_AIN2_gc;
+        ADC0.MUXPOS  = ADC_MUXPOS_AIN2_gc;
     }
     else if (channel == 3)
     {
-       ADC0.MUXPOS  = ADC_MUXPOS_AIN3_gc;
+        ADC0.MUXPOS  = ADC_MUXPOS_AIN3_gc;
     }
     else if (channel == 4)
     {
-       ADC0.MUXPOS  = ADC_MUXPOS_AIN4_gc;
+        ADC0.MUXPOS  = ADC_MUXPOS_AIN4_gc;
     }
     else if (channel == 5)
     {
-       ADC0.MUXPOS  = ADC_MUXPOS_AIN5_gc;
+        ADC0.MUXPOS  = ADC_MUXPOS_AIN5_gc;
     }
     else if (channel == 6)
     {
-       ADC0.MUXPOS  = ADC_MUXPOS_AIN6_gc;
+        ADC0.MUXPOS  = ADC_MUXPOS_AIN6_gc;
     }
     else if (channel == 7)
     {
-       ADC0.MUXPOS  = ADC_MUXPOS_AIN7_gc;
+        ADC0.MUXPOS  = ADC_MUXPOS_AIN7_gc;
     }
     else if (channel == 8)
     {
-       ADC0.MUXPOS  = ADC_MUXPOS_AIN8_gc;
+        ADC0.MUXPOS  = ADC_MUXPOS_AIN8_gc;
     }
     else if (channel == 9)
     {
-       ADC0.MUXPOS  = ADC_MUXPOS_AIN9_gc;
+        ADC0.MUXPOS  = ADC_MUXPOS_AIN9_gc;
     }
     else
     {
@@ -103,12 +102,12 @@ uint16_t ADC0_conversion(void) {
 }
 
 
-uint16_t ADC0_get_channel(void)
+uint8_t ADC0_get_channel(void)
 {
     return channel;
 }
 
-uint16_t ADC0_set_channel(uint16_t ch)
+uint8_t ADC0_set_channel(uint8_t ch)
 {
     if ((ch <= 0) && (ch <= 16))
     {
