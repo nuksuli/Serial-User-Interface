@@ -61,7 +61,19 @@ static FILE USART_stream = FDEV_SETUP_STREAM(USART0_charprint,
                                              NULL, _FDEV_SETUP_WRITE);
 
 void PERIPHERAL_init(void)
-{
+{   
+    /*
+     * TCA0 configuration for LED (PF5) pwm
+     */
+    //Set pwm output to PORTF
+    PORTMUX.TCAROUTEA = PORTMUX_TCA0_PORTF_gc;
+    //enable split mode
+    TCA0.SPLIT.CTRLD = TCA_SPLIT_SPLITM_bm;
+    //HCMP2EN controls PIN5
+    TCA0.SPLIT.CTRLB = TCA_SPLIT_HCMP2EN_bm;
+    //Set period resolution
+    TCA0.SPLIT.HPER = UINT8_MAX;
+    
     PORTF.DIRSET = PIN5_bm;
     PORTF.OUTSET = PIN5_bm;
     PORTF.DIRCLR = PIN6_bm;
@@ -94,21 +106,32 @@ void command_execute(char **parsed_command)
         {
             LED_off();
         }
-        /*
         else if (strcmp(parsed_command[1], "SET") == 0)
         {
-            pwm_period(atoi(parsed_command[2]));
-        }
-         */
-        else
-        {
-            if (LED_status())
+            int duty = strtol(parsed_command[2], NULL, 10);
+            
+            if ((duty < 0)||(duty > UINT8_MAX))
             {
-                printf("LED is currently OFF\n\r");
+                printf("DUTY NOT VALID\n\r");
             }
             else
             {
-                printf("LED is currently ON\n\r");
+                LED_pwm((uint8_t) duty);
+            }
+        }
+        else
+        {
+            if (TCA0.SPLIT.CTRLA & TCA_SPLIT_ENABLE_bm)
+            {
+                printf("LED is in PWM MODE. DUTY is set to %d\n\r", UINT8_MAX - TCA0.SPLIT.HCMP2);
+            }
+            else if (PORTF.OUT & PIN5_bm)
+            {
+                printf("LED is OFF\n\r");
+            }
+            else
+            {
+                printf("LED is ON\n\r");
             }
         }
     }
