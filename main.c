@@ -24,6 +24,9 @@
 
 //Function prototypes
 void USART0_init(void);
+void PIN_init(void);
+void TCA0_init(void);
+void TCA0_hard_reset(void);
 void command_parse(char **parsed_command, char *command);
 void command_execute(char **parsed_command);
 static FILE USART_stream;
@@ -61,20 +64,29 @@ static int USART0_charprint(char c, FILE *stream)
 static FILE USART_stream = FDEV_SETUP_STREAM(USART0_charprint,
                                              NULL, _FDEV_SETUP_WRITE);
 
-void PERIPHERAL_init(void)
-{   
-    /*
-     * TCA0 configuration for LED (PF5) pwm
-     */
-    //Set pwm output to PORTF
-    PORTMUX.TCAROUTEA = PORTMUX_TCA0_PORTF_gc;
-    //enable split mode
-    TCA0.SPLIT.CTRLD = TCA_SPLIT_SPLITM_bm;
-    //HCMP2EN controls PIN5
-    TCA0.SPLIT.CTRLB = TCA_SPLIT_HCMP2EN_bm;
-    //Set period resolution
-    TCA0.SPLIT.HPER = UINT8_MAX;
+void TCA0_hard_reset(void)
+{
+    /* stop timer */
+    TCA0.SINGLE.CTRLA &= ~(TCA_SINGLE_ENABLE_bm);  
     
+    /* force a hard reset */
+    TCA0.SINGLE.CTRLESET = TCA_SINGLE_CMD_RESET_gc; 
+}
+
+void TCA0_init(void)
+{
+    /* Set pwm output to PORTF */
+    PORTMUX.TCAROUTEA = PORTMUX_TCA0_PORTF_gc;
+    /* enable split mode */
+    TCA0.SPLIT.CTRLD = TCA_SPLIT_SPLITM_bm;
+    /* Set period resolution */
+    TCA0.SPLIT.HPER = UINT8_MAX;
+    /* Start timer */
+    TCA0.SPLIT.CTRLA = TCA_SPLIT_ENABLE_bm;
+}
+
+void PIN_init(void)
+{   
     PORTF.DIRSET = PIN5_bm;
     PORTF.OUTSET = PIN5_bm;
     PORTF.DIRCLR = PIN6_bm;
@@ -123,7 +135,7 @@ void command_execute(char **parsed_command)
         }
         else
         {
-            if (TCA0.SPLIT.CTRLA & TCA_SPLIT_ENABLE_bm)
+            if (TCA0.SPLIT.CTRLB & TCA_SPLIT_HCMP2EN_bm)
             {
                 printf("LED is in PWM MODE. DUTY is set to %d\n\r", UINT8_MAX - TCA0.SPLIT.HCMP2);
             }
@@ -293,8 +305,8 @@ void command_execute(char **parsed_command)
             printf("Analog-to-digital comparator.\n\r"
                    "Avajlable ADC commands: \n\r"
                    "\tADC\t print Analog-to-digital conversion\n\r"
-                   "\tADC SET AN<n>\t set analog input pin\n\r"
-                   "\tAvailable pins: 0-15\n\r");
+                   "\tADC SET AN<n>\t set analog input channel\n\r"
+                   "\tAvailable channels: 0-15\n\r");
         }
         else
         {
@@ -320,8 +332,10 @@ void command_execute(char **parsed_command)
 
 int main(void)
 {
-    PERIPHERAL_init();
     USART0_init();
+    TCA0_hard_reset();
+    TCA0_init();
+    PIN_init();
     command = malloc(UINT8_MAX * sizeof(char));
     parsed_command = malloc(5 * sizeof(char *));
     //Configure IDLE sleep mode
