@@ -20,6 +20,7 @@
 #include "vref.h"
 #include "led.h"
 #include "button.h"
+#include <avr/sleep.h>
 
 //Function prototypes
 void USART0_init(void);
@@ -96,6 +97,7 @@ void command_parse(char **parsed_command, char *command)
 //Execute command defined by parsed arguments.
 void command_execute(char **parsed_command)
 {
+    //Block for handling LED commands
     if (strcmp(parsed_command[0], "LED") == 0)
     {
         if (strcmp(parsed_command[1], "ON") == 0)
@@ -135,6 +137,7 @@ void command_execute(char **parsed_command)
             }
         }
     }
+    //Block for handling button commands
     else if (strcmp(parsed_command[0], "BTN") == 0)
     {
         if (strcmp(parsed_command[1], "INV") == 0)
@@ -172,58 +175,52 @@ void command_execute(char **parsed_command)
             printf("%s\n\r", BTN_status());
         }
     }
+    //Block for handling temp commands
     else if (strcmp(parsed_command[0], "TEMP") == 0)
     {
         uint16_t temp = temperature();
         printf("Temperature: %d \n\r", temp);
     }
+    //Block for handling reset commands
     else if (strcmp(parsed_command[0], "RESET") == 0)
     {
         printf("Resetting...\r\n");
         reset();
     }
+    //Block for handling ADC commands
     else if (strcmp(parsed_command[0], "ADC") == 0)
     {
         if (strcmp(parsed_command[1], "SET") == 0)
         {
             if (strstr(parsed_command[2], "AN") != NULL)
             {
-                ch = *(parsed_command[2] + 2) - 48;
-                if (strlen(parsed_command[2]) == 3)
+                ch = strtol(parsed_command[2] + 2, NULL, 10);
+                if (ADC0_set_channel(ch) == 1)
                 {
-                    if (ADC0_set_channel(ch) == 1)
-                    {
-                        printf("Channel set to: %i \r\n", ch);
-                    }
-                    else
-                    {
-                        printf("Invalid channel\r\n");
-                    }
-                }
-                else if (strlen(parsed_command[2]) == 4)
-                {
-                    ch = *(parsed_command[2] + 3) - 38;
-                    if (ADC0_set_channel(ch) == 1)
-                    {
-                        printf("Channel set to: %i \r\n", ch);
-                    }
-                    else
-                    {
-                        printf("Invalid channel\r\n");
-                    }
+                    printf("Channel set to: %i \r\n", ch);
                 }
                 else
                 {
-                    printf("Invalid arguments!");
+                    printf("Invalid channel\r\n");
                 }
+            }     
+            else
+            {
+                printf("Invalid arguments!");
             }
         }
-        else
+        else if(strcmp(parsed_command[1], "\0") == 0)
         {
             uint16_t adc = ADC0_conversion();
             printf("Conversion result: %d \n\r", adc);
         }
+        else
+        {
+            printf("Invalid arguments!\r\n"
+                    "Check HELP ADC for available commands.\r\n");
+        }
     }
+    //Block for handling VREF commands
     else if (strcmp(parsed_command[0], "VREF") == 0)
     {
         if (strcmp(parsed_command[1], "SET") == 0)
@@ -261,6 +258,7 @@ void command_execute(char **parsed_command)
             }
         }
     }
+    //Block for handling help commands
     else if (strcmp(parsed_command[0], "HELP") == 0)
     {
         if (strcmp(parsed_command[1], "LED") == 0)
@@ -313,6 +311,7 @@ void command_execute(char **parsed_command)
     {
         printf("NOT A VALID COMMAND!\r\n");
     }
+    //Reset command variable
     for (uint8_t i = 0; i < UINT8_MAX; i++)
     {
         parsed_command[i] = "\0";
@@ -325,13 +324,15 @@ int main(void)
     USART0_init();
     command = malloc(UINT8_MAX * sizeof(char));
     parsed_command = malloc(5 * sizeof(char *));
+    //Configure IDLE sleep mode
+    set_sleep_mode(SLPCTRL_SMODE_IDLE_gc);
     sei();
 
     printf("Program starting!\r\n");
 
     while (1)
     {
-        ;
+        sleep_mode();
     }
 }
 

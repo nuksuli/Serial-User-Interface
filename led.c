@@ -1,6 +1,6 @@
 /*
  * File:   led.c
- * Author: dtek0068
+ * Author: jepino
  *
  * Created on 12 December 2020, 17:49
  */
