@@ -1,6 +1,6 @@
 /*
  * File:   reset.c
- * Author: Niko Kalliomaa and Matias Lappalainen
+ * Author: jepino
  *
  * Created on 09 December 2020, 23:03
  */

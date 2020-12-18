@@ -1,6 +1,6 @@
 /*
  * File:   button.c
- * Author: dtek0068
+ * Author: jepino
  *
  * Created on 13 December 2020, 10:13
  */

@@ -1,6 +1,13 @@
+/*
+ * File:   main.c
+ * Author: jepino, nikall, waaarn, majlap
+ *
+ * Created on 09 December 2020, 16:02
+ */
+
 #define F_CPU 3333333
 #define USART0_BAUD_RATE(BAUD_RATE) \
-    ((float)(F_CPU * 64 / (16 * (float)BAUD_RATE)) + 0.5)
+        ((float)(F_CPU * 64 / (16 * (float)BAUD_RATE)) + 0.5)
 #define MAX_COMMAND_LEN 255
 #define MAX_ARGUMENT_LEN 3
 #define BACKSPACE 127
@@ -22,7 +29,7 @@
 #include "button.h"
 #include <avr/sleep.h>
 
-//Function prototypes
+/* Function prototypes */
 void USART0_init(void);
 void PIN_init(void);
 void TCA0_init(void);
@@ -31,13 +38,12 @@ void command_parse(char **parsed_command, char *command);
 void command_execute(char **parsed_command);
 static FILE USART_stream;
 
-//Declaration of global variables
+/* Declaration of global variables */
 char *command;
 char **parsed_command;
 uint8_t command_pointer = 0;
-uint8_t ch;
 
-//Initialise serial data transfer
+/* Initialise serial data transfer */
 void USART0_init(void)
 {
     PORTA.DIRCLR = PIN1_bm;
@@ -52,6 +58,7 @@ void USART0_init(void)
     stdout = &USART_stream;
 }
 
+/* Print char tp serial */
 static int USART0_charprint(char c, FILE *stream)
 {
     while (!(USART0.STATUS & USART_DREIF_bm))
@@ -61,9 +68,11 @@ static int USART0_charprint(char c, FILE *stream)
     USART0.TXDATAL = c;
     return 0;
 }
+
+/* Configure printf serial data transfer */
 static FILE USART_stream = FDEV_SETUP_STREAM(USART0_charprint,
                                              NULL, _FDEV_SETUP_WRITE);
-
+/* Hard reset TCA0 (recommended by microchip before changing to split mode)*/
 void TCA0_hard_reset(void)
 {
     /* stop timer */
@@ -73,6 +82,7 @@ void TCA0_hard_reset(void)
     TCA0.SINGLE.CTRLESET = TCA_SINGLE_CMD_RESET_gc; 
 }
 
+/* Initialise TCA0 (output register, mode, resolution)*/
 void TCA0_init(void)
 {
     /* Set pwm output to PORTF */
@@ -85,6 +95,7 @@ void TCA0_init(void)
     TCA0.SPLIT.CTRLA = TCA_SPLIT_ENABLE_bm;
 }
 
+/* Set I/O pins and  */
 void PIN_init(void)
 {   
     PORTF.DIRSET = PIN5_bm;
@@ -92,7 +103,7 @@ void PIN_init(void)
     PORTF.DIRCLR = PIN6_bm;
 }
 
-//Parse arguments separated by spaces from input string
+/* Parse arguments separated by spaces from input string */
 void command_parse(char **parsed_command, char *command)
 {
     char *token;
@@ -106,10 +117,10 @@ void command_parse(char **parsed_command, char *command)
     }
 }
 
-//Execute command defined by parsed arguments.
+/* Execute command defined by parsed arguments */
 void command_execute(char **parsed_command)
 {
-    //Block for handling LED commands
+    /* Block for handling LED commands */
     if (strcmp(parsed_command[0], "LED") == 0)
     {
         if (strcmp(parsed_command[1], "ON") == 0)
@@ -149,7 +160,7 @@ void command_execute(char **parsed_command)
             }
         }
     }
-    //Block for handling button commands
+    /* Block for handling button commands */
     else if (strcmp(parsed_command[0], "BTN") == 0)
     {
         if (strcmp(parsed_command[1], "INV") == 0)
@@ -187,26 +198,26 @@ void command_execute(char **parsed_command)
             printf("%s\n\r", BTN_status());
         }
     }
-    //Block for handling temp commands
+    /* Block for handling temp commands */
     else if (strcmp(parsed_command[0], "TEMP") == 0)
     {
         uint16_t temp = temperature();
         printf("Temperature: %d \n\r", temp);
     }
-    //Block for handling reset commands
+    /* Block for handling reset commands */
     else if (strcmp(parsed_command[0], "RESET") == 0)
     {
         printf("Resetting...\r\n");
         reset();
     }
-    //Block for handling ADC commands
+    /* Block for handling ADC commands */
     else if (strcmp(parsed_command[0], "ADC") == 0)
     {
         if (strcmp(parsed_command[1], "SET") == 0)
         {
             if (strstr(parsed_command[2], "AN") != NULL)
             {
-                ch = strtol(parsed_command[2] + 2, NULL, 10);
+                uint8_t ch = strtol(parsed_command[2] + 2, NULL, 10);
                 if (ADC0_set_channel(ch) == 1)
                 {
                     printf("Channel set to: %i \r\n", ch);
@@ -232,7 +243,7 @@ void command_execute(char **parsed_command)
                     "Check HELP ADC for available commands.\r\n");
         }
     }
-    //Block for handling VREF commands
+    /* Block for handling VREF commands */
     else if (strcmp(parsed_command[0], "VREF") == 0)
     {
         if (strcmp(parsed_command[1], "SET") == 0)
@@ -270,7 +281,7 @@ void command_execute(char **parsed_command)
             }
         }
     }
-    //Block for handling help commands
+    /* Block for handling help commands */
     else if (strcmp(parsed_command[0], "HELP") == 0)
     {
         if (strcmp(parsed_command[1], "LED") == 0)
@@ -323,7 +334,7 @@ void command_execute(char **parsed_command)
     {
         printf("NOT A VALID COMMAND!\r\n");
     }
-    //Reset command variable
+    /* Reset command variable */
     for (uint8_t i = 0; i < UINT8_MAX; i++)
     {
         parsed_command[i] = "\0";
@@ -336,20 +347,24 @@ int main(void)
     TCA0_hard_reset();
     TCA0_init();
     PIN_init();
+    /* Allocate memory for global variables (Never freed but reused)*/
     command = malloc(UINT8_MAX * sizeof(char));
     parsed_command = malloc(5 * sizeof(char *));
-    //Configure IDLE sleep mode
+    /* Configure IDLE sleep mode */
     set_sleep_mode(SLPCTRL_SMODE_IDLE_gc);
+    /* Enable interrupts */
     sei();
 
     printf("Program starting!\r\n");
 
+    /* Superloop calls sleep mode repeatedly, ISR handles functionality */
     while (1)
     {
         sleep_mode();
     }
 }
 
+/* ISR for USART0 input, handles calling command parser and executer */
 ISR(USART0_RXC_vect)
 {
     char next_char = USART0.RXDATAL;
